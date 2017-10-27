@@ -4,6 +4,8 @@ TOKEN = "472298128:AAHjJOgBElcCZfyv-VIpSP0khOXsZuvRHsU"
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
 						  ConversationHandler)
+from math import radians, cos, sin, asin, sqrt
+DISTANCE_THRESHOLD = 5
 
 import logging
 
@@ -14,6 +16,35 @@ logger = logging.getLogger(__name__)
 
 LOCATION, WHATUWANT = range(2)
 
+
+
+
+def find_partner(user_location, user_chat_id):
+	partner_list = []
+	current_user_dictionary = {}
+	# read dictionary from pickle
+	for i in current_user_dictionary:
+		if i != user_chat_id:
+			coordinate_dictionary = {}
+			inner_dictionary = current_user_dictionary[i]
+			coordinates = inner_dictionary['coordinates']
+			coordinate_dictionary["longitude"] = coordinates[1]
+			coordinate_dictionary["latitude"] = coordinates[0]
+			if checkDistance(user_location,coordinate_dictionary) < DISTANCE_THRESHOLD:
+				partner_list.append(inner_dictionary)
+	return partner_list
+
+def checkDistance(user_location, other_user_location):
+	user_lon = user_location["longitude"]
+	user_lat = user_location["latitude"]
+	other_lon = other_user_location["longitude"]
+	other_lat = other_user_location["latitude"]
+
+	lon1, lat1, lon2, lat2 = map(radians, [user_lon, user_lat, other_lon, other_lat])
+
+	km = 6371*(2*asin(sqrt(sin((lat2 - lat1)/2)**2 + cos(lat1) * cos(lat2) * sin((lon2 - lon1)/2)**2)))
+	print ("The distance between the two points is: " + str(km))
+	return km
 
 def start(bot, update):
 	update.message.reply_text(
@@ -69,11 +100,12 @@ def whatuwant(bot, update):
 							  reply_markup=ReplyKeyboardRemove())
 
 	#Todo call function to get nearby user should return user's username or list of username(s)
-	usernameList = ["This_is_username1", "This_is_username2", "This_is_username3"]
+	# usernameList = ["This_is_username1", "This_is_username2", "This_is_username3"]
+	usernameList = find_partner()
 	update.message.reply_text('Found the following user(s) near you with similar interest.\n')
 
-	for username in usernameList:
-		update.message.reply_text('http://t.me/' + username + '/')
+	for data in usernameList:
+		update.message.reply_text('http://t.me/' + data['username'] + '/')
 
 
 	return ConversationHandler.END
