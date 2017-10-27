@@ -1,16 +1,19 @@
-TOKEN = "439442918:AAFtoa3vmZ9uvBc3eNYojEVXXGm2GkTYmAE"
+TOKEN = "472298128:AAHjJOgBElcCZfyv-VIpSP0khOXsZuvRHsU"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 DISTANCE_THRESHOLD = 5
 
+from telegram import Bot
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
 						  ConversationHandler)
 import pickle
+import threading
 import logging
 import re
 import nltk
 import requests
 import json
+from random import randint
 from nltk.stem.porter import PorterStemmer
 ps = PorterStemmer()
 from math import radians, cos, sin, asin, sqrt
@@ -155,6 +158,20 @@ def error(bot, update, error):
 	logger.warning('Update "%s" caused error "%s"', update, error)
 
 
+
+def sendToPeople():
+	global database
+	bot = Bot(token=TOKEN)
+	# print ("here", database)
+	if (database != {}):
+		# print ("here")
+		for j in database.keys():
+			factNumber = randint(0, len(factList)-1)
+			print ("Sending fact number", factNumber, "to user", database[j]["first_name"])
+			bot.send_message(chat_id=j, text=factList[factNumber])
+	threading.Timer(20, sendToPeople).start()
+
+
 def main():
 	updater = Updater(TOKEN)
 	dp = updater.dispatcher
@@ -179,5 +196,8 @@ if __name__ == '__main__':
 		print (database)
 	except:
 		database = {}
+	# startFactFunc()
+	threading.Thread(target=sendToPeople).start()
+	# sendToPeople(database)
 	main()
 
