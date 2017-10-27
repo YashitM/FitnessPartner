@@ -1,55 +1,119 @@
-import json 
-import requests
-import time
-
 TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
-URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+
+from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
+						  ConversationHandler)
+
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+					level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+
+GENDER, PHOTO, LOCATION, BIO = range(4)
 
 
-def get_url(url):
-	response = requests.get(url)
-	content = response.content.decode("utf8")
-	return content
+def start(bot, update):
+	reply_keyboard = [['Boy', 'Girl', 'Other']]
+
+	update.message.reply_text(
+		'Hi! My name is Professor Bot. I will hold a conversation with you. '
+		'Send /cancel to stop talking to me.\n\n'
+		'Are you a boy or a girl?',
+		reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+
+	return GENDER
 
 
-def get_json_from_url(url):
-	content = get_url(url)
-	js = json.loads(content)
-	return js
+def gender(bot, update):
+	user = update.message.from_user
+	logger.info("Gender of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text('I see! Please send me a photo of yourself, '
+							  'so I know what you look like, or send /skip if you don\'t want to.',
+							  reply_markup=ReplyKeyboardRemove())
+
+	return LOCATION
 
 
-def get_updates():
-	url = URL + "getUpdates"
-	js = get_json_from_url(url)
-	print (js)
-	return js
+def location(bot, update):
+	user = update.message.from_user
+	user_location = update.message.location
+	print(user_location)
+	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
+				user_location.longitude)
+	update.message.reply_text('Maybe I can visit you sometime! '
+							  'At last, tell me something about yourself.')
+
+	return BIO
 
 
-def get_last_chat_id_and_text(updates):
-	num_updates = len(updates["result"])
-	last_update = num_updates - 1
-	text = updates["result"][last_update]["message"]["text"]
-	chat_id = updates["result"][last_update]["message"]["chat"]["id"]
-	return (text, chat_id)
+def skip_location(bot, update):
+	user = update.message.from_user
+	logger.info("User %s did not send a location.", user.first_name)
+	update.message.reply_text('You seem a bit paranoid! '
+							  'At last, tell me something about yourself.')
+
+	return BIO
 
 
-def send_message(text, chat_id):
-	url = URL + "sendMessage?text={}&chat_id={}".format(text, chat_id)
-	get_url(url)
-	
+def bio(bot, update):
+	user = update.message.from_user
+	logger.info("Bio of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text('Thank you! I hope we can talk again some day.')
 
-text, chat = get_last_chat_id_and_text(get_updates())
+	return ConversationHandler.END
 
-send_message("loser", 130275983)
+
+def cancel(bot, update):
+	user = update.message.from_user
+	logger.info("User %s canceled the conversation.", user.first_name)
+	update.message.reply_text('Bye! I hope we can talk again some day.',
+							  reply_markup=ReplyKeyboardRemove())
+
+	return ConversationHandler.END
+
+
+def error(bot, update, error):
+	"""Log Errors caused by Updates."""
+	logger.warning('Update "%s" caused error "%s"', update, error)
+
 
 def main():
-	last_textchat = (None, None)
-	while True:
-		text, chat = get_last_chat_id_and_text(get_updates())
-		if (text, chat) != last_textchat:
-			send_message(text, chat)
-			last_textchat = (text, chat)
-		time.sleep(0.5)
+	# Create the EventHandler and pass it your bot's token.
+	updater = Updater(TOKEN)
+
+	# Get the dispatcher to register handlers
+	dp = updater.dispatcher
+
+	# Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
+	conv_handler = ConversationHandler(
+		entry_points=[CommandHandler('start', start)],
+
+		states={
+			GENDER: [RegexHandler('^(Boy|Girl|Other)$', gender)],
+
+			LOCATION: [MessageHandler(Filters.location, location),
+					   CommandHandler('skip', skip_location)],
+
+			BIO: [MessageHandler(Filters.text, bio)]
+		},
+
+		fallbacks=[CommandHandler('cancel', cancel)]
+	)
+
+	dp.add_handler(conv_handler)
+
+	# log all errors
+	dp.add_error_handler(error)
+
+	# Start the Bot
+	updater.start_polling()
+
+	# Run the bot until you press Ctrl-C or the process receives SIGINT,
+	# SIGTERM or SIGABRT. This should be used most of the time, since
+	# start_polling() is non-blocking and will stop the bot gracefully.
+	updater.idle()
 
 
 if __name__ == '__main__':
