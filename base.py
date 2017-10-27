@@ -23,7 +23,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-LOCATION, BIO = range(2)
+LOCATION, BIO, BMICALCULATORHELPER = range(3)
 
 database = {}
 
@@ -204,11 +204,17 @@ def sendToPeople():
 	# threading.Timer(200, sendToPeople).start()
 
 def bmi_calculator(bot, update):
-	update.message.reply_text("Enter your height (in m)")
-	height = float(update.message.text)
-	update.message.reply_text("Enter your weight (in kg)")
-	weight = float(update.message.text)
-	update.message.reply_text("Your BMI is: " + str(weight/(height)**2))
+	update.message.reply_text("Enter your height (in m) and weight (in kg) [height weight]")
+
+	return BMICALCULATORHELPER
+
+def bmicalculatorhelper(bot, update):
+	
+	details = update.message.text
+	
+	height = float(details.split(" ")[0])
+	weight = float(details.split(" ")[1])
+	update.message.reply_text("Your BMI is: " + str(round(weight/(height)**2,3)))
 	
 	return ConversationHandler.END
 
@@ -220,7 +226,9 @@ def main():
 		states={
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
-			BIO: [MessageHandler(Filters.text, bio)]
+			BIO: [MessageHandler(Filters.text, bio)],
+
+			BMICALCULATORHELPER: [MessageHandler(Filters.text, bmicalculatorhelper)]
 		},
 		fallbacks=[CommandHandler('cancel', cancel)]
 	)
