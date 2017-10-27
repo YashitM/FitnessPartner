@@ -1,6 +1,6 @@
 # Fitness Partner
 
-## Contents
+## Frameworks
 1. **Python** To manage server side requests
 2. **Telegram BOT** What would we do without him!
 
