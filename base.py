@@ -27,9 +27,11 @@ def start(bot, update):
 def gender(bot, update):
 	user = update.message.from_user
 	logger.info("Gender of %s: %s", user.first_name, update.message.text)
+
 	update.message.reply_text('Gorgeous! Now, send me your location please, '
 							  'or send /skip if you don\'t want to.',
 							  reply_markup=ReplyKeyboardRemove())
+
 
 	return LOCATION
 
@@ -39,7 +41,6 @@ def location(bot, update):
 
 	user = update.message.from_user
 	user_location = update.message.location
-	print(user_location)
 	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
 				user_location.longitude)
 	update.message.reply_text('Maybe I can visit you sometime! '
@@ -64,8 +65,16 @@ def skip_location(bot, update):
 def whatuwant(bot, update):
 	user = update.message.from_user
 	logger.info("%s wants to : %s", user.first_name, update.message.text)
-	update.message.reply_text('Thank you! I hope we can talk again some day.',
+	update.message.reply_text('Ok looking for nearby users that want to ' + update.message.text,
 							  reply_markup=ReplyKeyboardRemove())
+
+	#Todo call function to get nearby user should return user's username or list of username(s)
+	usernameList = ["This_is_username1", "This_is_username2", "This_is_username3"]
+	update.message.reply_text('Found the following user(s) near you with similar interest.\n')
+
+	for username in usernameList:
+		update.message.reply_text('http://t.me/' + username + '/')
+
 
 	return ConversationHandler.END
 
