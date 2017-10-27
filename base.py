@@ -23,7 +23,6 @@ def find_partner(user_location, user_chat_id, user_activity):
 	try:
 		partner_list = []
 		current_user_dictionary = database
-		# read dictionary from pickle
 		for i in current_user_dictionary:
 			if i != user_chat_id:
 				print (i, user_chat_id)
@@ -83,7 +82,6 @@ def skip_location(bot, update):
 	logger.info("User %s did not send a location.", user.first_name)
 	update.message.reply_text('You seem a bit paranoid! '
 							  'At last, tell me something about yourself.')
-
 	return BIO
 
 
@@ -116,44 +114,24 @@ def cancel(bot, update):
 
 
 def error(bot, update, error):
-	"""Log Errors caused by Updates."""
 	logger.warning('Update "%s" caused error "%s"', update, error)
 
 
 def main():
-	# Create the EventHandler and pass it your bot's token.
 	updater = Updater(TOKEN)
-
-	# Get the dispatcher to register handlers
 	dp = updater.dispatcher
-
-	# Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
 	conv_handler = ConversationHandler(
 		entry_points=[CommandHandler('start', start)],
-
 		states={
-
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
-
 			BIO: [MessageHandler(Filters.text, bio)]
-
 		},
-
 		fallbacks=[CommandHandler('cancel', cancel)]
 	)
-
 	dp.add_handler(conv_handler)
-
-	# log all errors
 	dp.add_error_handler(error)
-
-	# Start the Bot
 	updater.start_polling()
-
-	# Run the bot until you press Ctrl-C or the process receives SIGINT,
-	# SIGTERM or SIGABRT. This should be used most of the time, since
-	# start_polling() is non-blocking and will stop the bot gracefully.
 	updater.idle()
 
 
