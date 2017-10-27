@@ -12,19 +12,16 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-GENDER, LOCATION, WHATUWANT = range(3)
+LOCATION, WHATUWANT = range(2)
 
 
 def start(bot, update):
-	reply_keyboard = [['Boy', 'Girl', 'Other']]
-
 	update.message.reply_text(
-		'Hi! My name is Professor Bot. I will hold a conversation with you. '
+		'Hi! My name is Fitness Bot.'
 		'Send /cancel to stop talking to me.\n\n'
-		'Are you a boy or a girl?',
-		reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+		'Before we get started I\'ll need your location to start with.')
 
-	return GENDER
+	return LOCATION
 
 
 def gender(bot, update):
@@ -53,6 +50,8 @@ def location(bot, update):
 
 
 def skip_location(bot, update):
+	reply_keyboard = [['Run', 'Swim', 'Walk', 'Die']]
+
 	user = update.message.from_user
 	logger.info("User %s did not send a location.", user.first_name)
 	update.message.reply_text('You seem a bit paranoid! '
@@ -97,8 +96,6 @@ def main():
 		entry_points=[CommandHandler('start', start)],
 
 		states={
-			GENDER: [RegexHandler('^(Boy|Girl|Other)$', gender)],
-
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
 
