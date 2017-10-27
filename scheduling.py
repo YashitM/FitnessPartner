@@ -11,8 +11,7 @@ def start(bot, update):
 
 
 def alarm(bot, job):
-	bot.send_message(job.context, text='Beep!')
-
+	bot.send_message(job.context, text = 'Beep!')
 
 
 def set_timer(bot, update, args, job_queue, chat_data):
@@ -38,7 +37,7 @@ def set_timer(bot, update, args, job_queue, chat_data):
 		if total < 0:
 			update.message.reply_text('Sorry we can not go back to future!')
 			return
-		job = job_queue.run_repeating(alarm, context=chat_id, interval = 5, first = due)
+		job = job_queue.run_repeating(alarm, context = chat_id, interval = 86400, first = total)
 		chat_data['job'] = job
 
 		update.message.reply_text('Reminder successfully set!')
