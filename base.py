@@ -5,10 +5,14 @@ DISTANCE_THRESHOLD = 5
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
 						  ConversationHandler)
-import requests
-import json
 import pickle
 import logging
+import re
+import nltk
+import requests
+import json
+from nltk.stem.porter import PorterStemmer
+ps = PorterStemmer()
 from math import radians, cos, sin, asin, sqrt
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 					level=logging.INFO)
@@ -65,7 +69,6 @@ def start(bot, update):
 def location(bot, update):
 	user = update.message.from_user
 	user_location = update.message.location
-	reply_keyboard = [['Running', 'Swimming', 'Gym']]
 	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
 				user_location.longitude)
 	database[update.message.chat.id]['first_name'] = user.first_name
@@ -73,7 +76,7 @@ def location(bot, update):
 	database[update.message.chat.id]['coordinates'] = (user_location.latitude, user_location.longitude)
 	#find_partner(user_location, update.message.chat.id)
 	update.message.reply_text('Maybe I can visit you sometime! '
-							  'At last, What sort of activity interests you?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+							  'At last, What sort of fitness activity interests you?')
 
 	return BIO
 
@@ -88,11 +91,12 @@ def skip_location(bot, update):
 
 
 def bio(bot, update):
-	database[update.message.chat.id]['activity'] = update.message.text
+	message = update.message.text
+	database[update.message.chat.id]['activity'] = ps.stem(message)
 	with open('database.pickle', 'wb') as f:
 		pickle.dump(database, f)
 	user = update.message.from_user
-	logger.info("Bio of %s: %s", user.first_name, update.message.text)
+	logger.info("Bio of %s: %s", user.first_name, message)
 	update.message.reply_text('Finding someone nearby...')
 	print (database)
 	usernameList = find_partner({"latitude":database[update.message.chat.id]['coordinates'][0], "longitude":database[update.message.chat.id]['coordinates'][1]}, update.message.chat.id, database[update.message.chat.id]['activity'])
@@ -151,9 +155,6 @@ def main():
 	# Start the Bot
 	updater.start_polling()
 
-	# Run the bot until you press Ctrl-C or the process receives SIGINT,
-	# SIGTERM or SIGABRT. This should be used most of the time, since
-	# start_polling() is non-blocking and will stop the bot gracefully.
 	updater.idle()
 
 
