@@ -1,5 +1,8 @@
 TOKEN = "439442918:AAFtoa3vmZ9uvBc3eNYojEVXXGm2GkTYmAE"
-from telegram.ext import Updater, CommandHandler
+from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
+						  ConversationHandler)
+from telegram import Bot
 import logging
 import time
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -7,9 +10,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 reminders = {}
+chat_data = {}
+
+SELECTREMOVE = range(1)
+
 def start(bot, update):
 	update.message.reply_text('Hi! Use /set <24 hr time><space><reason> to set a reminder')
-
+	return ConversationHandler.END
 
 
 def alarm(bot, job):
@@ -17,9 +24,8 @@ def alarm(bot, job):
 
 
 def set_timer(bot, update, args, job_queue, chat_data):
-	prevupdate = update
-	print (len(args))
-	chat_id = prevupdate.message.chat_id
+	print ("entered function")
+	chat_id = update.message.chat_id
 	try:
 		total = 0
 		reason = ""
@@ -47,24 +53,38 @@ def set_timer(bot, update, args, job_queue, chat_data):
 		
 		reminders[chat_id] = {'time': args[0], 'reason': reason}
 		job = job_queue.run_repeating(alarm, context = chat_id, interval = 86400, first = total)
-		chat_data[chat_id] = job
+		print (hahaha)
+		if len(chat_data[chat_id]) == 0:
+			chat_data[chat_id] = []
+		chat_data[chat_id].append({'Job': job, 'Time':args[0], 'Reason':reason})
 
 		update.message.reply_text('Reminder successfully set!')
 
 	except (IndexError, ValueError):
 		update.message.reply_text('Usage: /set <24 hr time><space><reason>')
-
+	return ConversationHandler.END
 
 def unset(bot, update, args, chat_data):
-	if update.message.chat.id not in chat_data:
+	if len(chat_data[update.message.chat.id]) == 0:
 		update.message.reply_text('You have no active timer')
 		return
+	else:
+		update.message.reply_text("please enter the time of the reminder you wish to delete from among the following")
+		for _ in range(len(chat_data[update.message.chat.id])):
+			update.message.reply_text(str(chat_data[update.message.chat.id][_]['Time']) + " : " + str(chat_data[update.message.chat.id][_]['Reason']))
 
-	job = chat_data[update.message.chat.id]
-	job.schedule_removal()
-	del chat_data[update.message.chat.id]
+	return SELECTREMOVE
+	
+
+def removeset(bot, update):
+	for _ in range(len(chat_data[update.message.chat.id])):
+		if chat_data[update.message.chat.id][_]['Time'] == update.message.text:
+			job = chat_data[update.message.chat.id][_]['Job']
+			chat_data[update.message.chat.id].remove(_)
+			job.schedule_removal()
+			break
 	update.message.reply_text('Timer successfully unset!')
-
+	return ConversationHandler.END
 
 def error(bot, update, error):
 	logger.warning('Update "%s" caused error "%s"', update, error)
@@ -73,13 +93,17 @@ def error(bot, update, error):
 def main():
 	updater = Updater(TOKEN)
 	dp = updater.dispatcher
-	dp.add_handler(CommandHandler("start", start))
-	dp.add_handler(CommandHandler("help", start))
-	dp.add_handler(CommandHandler("set", set_timer,
+	conv_handler = ConversationHandler(
+		entry_points=[CommandHandler("start", start), CommandHandler("help", start), CommandHandler("set", set_timer,
 								  pass_args = True,
 								  pass_job_queue = True,
-								  pass_chat_data = True))
-	dp.add_handler(CommandHandler("unset", unset, pass_chat_data=True, pass_args=True))
+								  pass_chat_data = True), CommandHandler("unset", unset, pass_chat_data=True, pass_args=True)],
+		states={
+			SELECTREMOVE: [MessageHandler(Filters.text, removeset)],
+		},
+		fallbacks=[]
+	)
+	dp.add_handler(conv_handler)
 	dp.add_error_handler(error)
 	updater.start_polling()
 	updater.idle()
