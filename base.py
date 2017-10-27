@@ -1,5 +1,7 @@
 TOKEN = "439442918:AAFtoa3vmZ9uvBc3eNYojEVXXGm2GkTYmAE"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+DISTANCE_THRESHOLD = 5
+
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
 						  ConversationHandler)
@@ -14,10 +16,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 LOCATION, BIO = range(2)
-DISTANCE_THRESHOLD = 5
+
 database = {}
 
-def find_partner(user_location, user_chat_id):
+def find_partner(user_location, user_chat_id, user_activity):
 	try:
 		partner_list = []
 		current_user_dictionary = database
@@ -30,7 +32,7 @@ def find_partner(user_location, user_chat_id):
 				coordinates = inner_dictionary['coordinates']
 				coordinate_dictionary["longitude"] = coordinates[1]
 				coordinate_dictionary["latitude"] = coordinates[0]
-				if checkDistance(user_location, coordinate_dictionary) < DISTANCE_THRESHOLD:
+				if checkDistance(user_location, coordinate_dictionary) < DISTANCE_THRESHOLD and user_activity == inner_dictionary["activity"]:
 					partner_list.append(inner_dictionary)
 
 		print ("list is: ", partner_list)
@@ -49,24 +51,6 @@ def checkDistance(user_location, other_user_location):
 	km = 6371*(2*asin(sqrt(sin((lat2 - lat1)/2)**2 + cos(lat1) * cos(lat2) * sin((lon2 - lon1)/2)**2)))
 	print ("The distance between the two points is: " + str(km))
 	return km
-"""
-def whatuwant(bot, update):
-	user = update.message.from_user
-	logger.info("%s wants to : %s", user.first_name, update.message.text)
-	update.message.reply_text('Ok looking for nearby users that want to ' + update.message.text,
-							  reply_markup=ReplyKeyboardRemove())
-
-	#Todo call function to get nearby user should return user's username or list of username(s)
-	# usernameList = ["This_is_username1", "This_is_username2", "This_is_username3"]
-	usernameList = find_partner()
-	update.message.reply_text('Found the following user(s) near you with similar interest.\n')
-
-	for data in usernameList:
-		update.message.reply_text('http://t.me/' + data['username'] + '/')
-
-
-	return ConversationHandler.END
-"""
 
 def start(bot, update):
 	print (update.message.chat.id)
@@ -77,9 +61,6 @@ def start(bot, update):
 							  reply_markup=ReplyKeyboardRemove())
 
 	return LOCATION
-
-
-
 
 def location(bot, update):
 	user = update.message.from_user
@@ -114,12 +95,14 @@ def bio(bot, update):
 	logger.info("Bio of %s: %s", user.first_name, update.message.text)
 	update.message.reply_text('Finding someone nearby...')
 	print (database)
-	usernameList = find_partner({"latitude":database[update.message.chat.id]['coordinates'][0], "longitude":database[update.message.chat.id]['coordinates'][1]}, update.message.chat.id)
-	update.message.reply_text('Found the following user(s) near you with similar interest.\n')
+	usernameList = find_partner({"latitude":database[update.message.chat.id]['coordinates'][0], "longitude":database[update.message.chat.id]['coordinates'][1]}, update.message.chat.id, database[update.message.chat.id]['activity'])
+	if len(usernameList) != 0:
+		update.message.reply_text('Found the following user(s) near you with similar interest.\n')
+		for data in usernameList:
+			update.message.reply_text('http://t.me/' + data['username'] + '/')
+	else:
+		update.message.reply_text("No users found with the same interest :( Please try again later!")
 
-	for data in usernameList:
-		update.message.reply_text('http://t.me/' + data['username'] + '/')
-	
 	return ConversationHandler.END
 	
 
