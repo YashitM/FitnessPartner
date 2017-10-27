@@ -4,3 +4,8 @@ Progress Update:
 2) Added Help Page to walkthrough new users
 3) Daily Reminder System (with allowance of custom reminders)
 4) Educating user about health related issues periodically
+5) BMI Calculation Complete
+
+Plan to add:
+1) Calorie Count on a Run/Walk
+2) Better handling on Reminders
