@@ -1,0 +1,9 @@
+Progress Update:
+
+1) Completed Partner Finding System Based on Distance and Interests (Integrated NLTK for improved matching of interests)
+2) Added Help Page to walkthrough new users
+
+Working on:
+
+1) Reminder System (Appointment Reminders, Medicine Reminders etc)
+2) Educating user about health related issues periodically
