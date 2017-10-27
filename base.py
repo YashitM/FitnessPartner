@@ -11,6 +11,7 @@ import threading
 import logging
 import re
 import nltk
+import time
 import requests
 import json
 from random import randint
@@ -186,13 +187,16 @@ def sendToPeople():
 	global database
 	bot = Bot(token=TOKEN)
 	# print ("here", database)
-	if (database != {}):
-		# print ("here")
-		for j in database.keys():
-			factNumber = randint(0, len(factList)-1)
-			print ("Sending fact number", factNumber, "to user", database[j]["first_name"])
-			bot.send_message(chat_id=j, text=factList[factNumber])
-	threading.Timer(200, sendToPeople).start()
+	while True:
+		print ("here")
+		if (database != {}):
+			# print ("here")
+			for j in database.keys():
+				factNumber = randint(0, len(factList)-1)
+				print ("Sending fact number", factNumber, "to user", database[j]["first_name"])
+				bot.send_message(chat_id=j, text=factList[factNumber])
+		time.sleep(20)
+	# threading.Timer(200, sendToPeople).start()
 
 
 def main():
