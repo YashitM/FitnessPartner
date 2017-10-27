@@ -9,3 +9,8 @@ Progress Update:
 Plan to add:
 1) Calorie Count on a Run/Walk
 2) Better handling on Reminders
+
+Difficulties:
+1) Maintaining scheduling simultaneously for all users
+
+No Redbull :(
