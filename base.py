@@ -1,4 +1,5 @@
-TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
+REAL_TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
+TOKEN = "472298128:AAHjJOgBElcCZfyv-VIpSP0khOXsZuvRHsU"
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
@@ -11,7 +12,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-GENDER, PHOTO, LOCATION, BIO = range(4)
+GENDER, LOCATION, WHATUWANT = range(3)
 
 
 def start(bot, update):
@@ -29,38 +30,43 @@ def start(bot, update):
 def gender(bot, update):
 	user = update.message.from_user
 	logger.info("Gender of %s: %s", user.first_name, update.message.text)
-	update.message.reply_text('I see! Please send me a photo of yourself, '
-							  'so I know what you look like, or send /skip if you don\'t want to.',
+	update.message.reply_text('Gorgeous! Now, send me your location please, '
+							  'or send /skip if you don\'t want to.',
 							  reply_markup=ReplyKeyboardRemove())
 
 	return LOCATION
 
 
 def location(bot, update):
+	reply_keyboard = [['Run', 'Swim', 'Walk', 'Die']]
+
 	user = update.message.from_user
 	user_location = update.message.location
 	print(user_location)
 	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
 				user_location.longitude)
 	update.message.reply_text('Maybe I can visit you sometime! '
-							  'At last, tell me something about yourself.')
+							  'What do you feel like doing today?',
+							  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
 
-	return BIO
+	return WHATUWANT
 
 
 def skip_location(bot, update):
 	user = update.message.from_user
 	logger.info("User %s did not send a location.", user.first_name)
 	update.message.reply_text('You seem a bit paranoid! '
-							  'At last, tell me something about yourself.')
+							  'What do you feel like doing today?',
+							  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
 
-	return BIO
+	return WHATUWANT
 
 
-def bio(bot, update):
+def whatuwant(bot, update):
 	user = update.message.from_user
-	logger.info("Bio of %s: %s", user.first_name, update.message.text)
-	update.message.reply_text('Thank you! I hope we can talk again some day.')
+	logger.info("%s wants to : %s", user.first_name, update.message.text)
+	update.message.reply_text('Thank you! I hope we can talk again some day.',
+							  reply_markup=ReplyKeyboardRemove())
 
 	return ConversationHandler.END
 
@@ -96,7 +102,7 @@ def main():
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
 
-			BIO: [MessageHandler(Filters.text, bio)]
+			WHATUWANT: [MessageHandler(Filters.text, whatuwant)]
 		},
 
 		fallbacks=[CommandHandler('cancel', cancel)]
