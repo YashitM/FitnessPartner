@@ -1,16 +1,56 @@
+import json 
 import requests
+import time
 
-botToken = "348036998:AAFT0S0MKz8OLiE1FA1k9sfjhuAKtR1htzE"
+TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
+URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 
-url = "https://api.telegram.org/"+botToken+"/"
 
-def get_updates_json(request):  
-	response = requests.get(request + 'getUpdates')
-	return response.json()
+def get_url(url):
+	response = requests.get(url)
+	content = response.content.decode("utf8")
+	return content
+
+
+def get_json_from_url(url):
+	content = get_url(url)
+	js = json.loads(content)
+	return js
+
+
+def get_updates():
+	url = URL + "getUpdates"
+	js = get_json_from_url(url)
+	print (js)
+	return js
+
+
+def get_last_chat_id_and_text(updates):
+	num_updates = len(updates["result"])
+	last_update = num_updates - 1
+	text = updates["result"][last_update]["message"]["text"]
+	chat_id = updates["result"][last_update]["message"]["chat"]["id"]
+	return (text, chat_id)
+
+
+def send_message(text, chat_id):
+	url = URL + "sendMessage?text={}&chat_id={}".format(text, chat_id)
+	get_url(url)
 	
-def last_update(data):  
-	results = data['result']
-	total_updates = len(results) - 1
-	return results[total_updates]
 
-print (url)
+text, chat = get_last_chat_id_and_text(get_updates())
+
+send_message("loser", 130275983)
+
+def main():
+	last_textchat = (None, None)
+	while True:
+		text, chat = get_last_chat_id_and_text(get_updates())
+		if (text, chat) != last_textchat:
+			send_message(text, chat)
+			last_textchat = (text, chat)
+		time.sleep(0.5)
+
+
+if __name__ == '__main__':
+	main()
