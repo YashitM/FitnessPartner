@@ -23,6 +23,40 @@ LOCATION, BIO = range(2)
 
 database = {}
 
+# List of facts about health
+factList = ['A lack of exercise is now causing as many deaths as smoking across the world, a study suggests.',
+			'People who regularly eat dinner or breakfast in restaurants double their risk of becoming obese.',
+			'Laughing 100 times is equivalent to 15 minutes of exercise on a stationary bicycle.',
+			'Sitting for more than three hours a day can cut two years off a person\'s life expectancy.',
+			'Over 30% of cancer could be prevented by avoiding tobacco and alcohol, having a healthy diet and physical activity.',
+			'Sleeping less than 7 hours each night reduces your life expectancy.',
+			'1 Can of Soda a day increases your chances of getting type 2 diabetes by 22%.',
+			'There are more skin cancer cases due to indoor tanning than lung cancer cases due to smoking.',
+			'Exercise, like walking, can reduce breast cancer risk by 25%.',
+			'McDonalds\' Caesar salad is more fattening than their hamburger. Not like the hamburger isn\'t fattening.',
+			'Severe Depression can cause us to biologically age more by increasing the aging process in cells.',
+			'Chicken contains 266% more fat than it did 40 years ago. Someone is feeding the chicken a little to much I guess.',
+			'Heavy marijuana smokers are at risk for some of the same health effects as cigarette smokers, like bronchitis and other respiratory illnesses.',
+			'On average, people who complain live longer. Releasing the tension increases immunity and boosts their health.',
+			'A half hour of physical activity 6 days a week is linked to 40% lower risk of early death.',
+			'The U.S. spends more money per person on healthcare than any other developed country, yet its life expectancy is below average.',
+			'1 out of every 4 dollars employers pay for healthcare in the U.S. is tied to unhealthy lifestyle choices or conditions like smoking, stress, or obesity.',
+			'In terms of your health —not how you look or smell— you only really have to shower once or twice a week. Well then I have been doing it right from the past 10 years.',
+			'A scientist cracked his knuckles on one hand for over 50 years to prove it did not cause Arthritis. What can I say he was a scientist after all.',
+			'Eating too much meat can accelerate your body\'s biological age.',
+			'Working past age 65 is linked to longer life, a study found.',
+			'People who read books live an average of almost 2 years longer than those who do not read at all, a Yale research found.',
+			'You can burn 20% more fat by exercising in the morning on an empty stomach. That is if you get up on time.',
+			'Breathing 100% oxygen, instead of the 21% in our atmosphere, is generally bad, and sometimes toxic.',
+			'You can tweak your metabolic health by turning down the bedroom thermostat a few degrees.',
+			'Violent dreams may be an early sign of brain disorders down the line, including Parkinson\'s disease and dementia. Need to cut short on horror movies I guess.',
+			'More than 13 million working days are lost every year because of stress-related illnesses. Stay with me won\'t let you take any stress',
+			'A study found that right-handed individuals have better oral hygiene and the lower incidence of caries because of their \
+			better manual dexterity and brush efficiency. I knew I was doing something better than the others.',
+			'Drinking very hot beverages increases your risk of developing cancer. Need to cut down on that coffee man.',
+			'A study showed that it\'s not necessary to run, swim or work out at the gym. Household chores such as vacuuming or scrubbing the floor, \
+			or merely walking to work provide enough exercise to protect the heart and extend life. And you though household chores were easy.']
+			
 def find_partner(user_location, user_chat_id, user_activity):
 	try:
 		partner_list = []
