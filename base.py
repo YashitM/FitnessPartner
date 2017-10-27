@@ -1,37 +1,41 @@
-REAL_TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
-TOKEN = "472298128:AAHjJOgBElcCZfyv-VIpSP0khOXsZuvRHsU"
-
+TOKEN = "439442918:AAFtoa3vmZ9uvBc3eNYojEVXXGm2GkTYmAE"
+URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
 						  ConversationHandler)
-from math import radians, cos, sin, asin, sqrt
-DISTANCE_THRESHOLD = 5
-
+import requests
+import json
+import pickle
 import logging
-
+from math import radians, cos, sin, asin, sqrt
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 					level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-LOCATION, WHATUWANT = range(2)
-
-
-
+LOCATION, BIO = range(2)
+DISTANCE_THRESHOLD = 5
+database = {}
 
 def find_partner(user_location, user_chat_id):
-	partner_list = []
-	current_user_dictionary = {}
-	# read dictionary from pickle
-	for i in current_user_dictionary:
-		if i != user_chat_id:
-			coordinate_dictionary = {}
-			inner_dictionary = current_user_dictionary[i]
-			coordinates = inner_dictionary['coordinates']
-			coordinate_dictionary["longitude"] = coordinates[1]
-			coordinate_dictionary["latitude"] = coordinates[0]
-			if checkDistance(user_location,coordinate_dictionary) < DISTANCE_THRESHOLD:
-				partner_list.append(inner_dictionary)
+	try:
+		partner_list = []
+		current_user_dictionary = database
+		# read dictionary from pickle
+		for i in current_user_dictionary:
+			if i != user_chat_id:
+				print (i, user_chat_id)
+				coordinate_dictionary = {}
+				inner_dictionary = current_user_dictionary[i]
+				coordinates = inner_dictionary['coordinates']
+				coordinate_dictionary["longitude"] = coordinates[1]
+				coordinate_dictionary["latitude"] = coordinates[0]
+				if checkDistance(user_location, coordinate_dictionary) < DISTANCE_THRESHOLD:
+					partner_list.append(inner_dictionary)
+
+		print ("list is: ", partner_list)
+	except:
+		print ("list is empty")
 	return partner_list
 
 def checkDistance(user_location, other_user_location):
@@ -45,54 +49,7 @@ def checkDistance(user_location, other_user_location):
 	km = 6371*(2*asin(sqrt(sin((lat2 - lat1)/2)**2 + cos(lat1) * cos(lat2) * sin((lon2 - lon1)/2)**2)))
 	print ("The distance between the two points is: " + str(km))
 	return km
-
-def start(bot, update):
-	update.message.reply_text(
-		'Hi! My name is Fitness Bot.'
-		'Send /cancel to stop talking to me.\n\n'
-		'Before we get started I\'ll need your location to start with.')
-
-	return LOCATION
-
-
-def gender(bot, update):
-	user = update.message.from_user
-	logger.info("Gender of %s: %s", user.first_name, update.message.text)
-
-	update.message.reply_text('Gorgeous! Now, send me your location please, '
-							  'or send /skip if you don\'t want to.',
-							  reply_markup=ReplyKeyboardRemove())
-
-
-	return LOCATION
-
-
-def location(bot, update):
-	reply_keyboard = [['Run', 'Swim', 'Walk', 'Die']]
-
-	user = update.message.from_user
-	user_location = update.message.location
-	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
-				user_location.longitude)
-	update.message.reply_text('Maybe I can visit you sometime! '
-							  'What do you feel like doing today?',
-							  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
-	return WHATUWANT
-
-
-def skip_location(bot, update):
-	reply_keyboard = [['Run', 'Swim', 'Walk', 'Die']]
-
-	user = update.message.from_user
-	logger.info("User %s did not send a location.", user.first_name)
-	update.message.reply_text('You seem a bit paranoid! '
-							  'What do you feel like doing today?',
-							  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
-	return WHATUWANT
-
-
+"""
 def whatuwant(bot, update):
 	user = update.message.from_user
 	logger.info("%s wants to : %s", user.first_name, update.message.text)
@@ -109,7 +66,62 @@ def whatuwant(bot, update):
 
 
 	return ConversationHandler.END
+"""
 
+def start(bot, update):
+	print (update.message.chat.id)
+	print (update.message.chat.first_name)
+	database[update.message.chat.id] = {}
+	update.message.reply_text('I see! Please send me your location, '
+							  'so I know where you live, or send /skip if you don\'t want to.',
+							  reply_markup=ReplyKeyboardRemove())
+
+	return LOCATION
+
+
+
+
+def location(bot, update):
+	user = update.message.from_user
+	user_location = update.message.location
+	reply_keyboard = [['Running', 'Swimming', 'Gym']]
+	logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
+				user_location.longitude)
+	database[update.message.chat.id]['first_name'] = user.first_name
+	database[update.message.chat.id]['username'] = user.username
+	database[update.message.chat.id]['coordinates'] = (user_location.latitude, user_location.longitude)
+	#find_partner(user_location, update.message.chat.id)
+	update.message.reply_text('Maybe I can visit you sometime! '
+							  'At last, What sort of activity interests you?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+
+	return BIO
+
+
+def skip_location(bot, update):
+	user = update.message.from_user
+	logger.info("User %s did not send a location.", user.first_name)
+	update.message.reply_text('You seem a bit paranoid! '
+							  'At last, tell me something about yourself.')
+
+	return BIO
+
+
+def bio(bot, update):
+	database[update.message.chat.id]['activity'] = update.message.text
+	with open('database.pickle', 'wb') as f:
+		pickle.dump(database, f)
+	user = update.message.from_user
+	logger.info("Bio of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text('Finding someone nearby...')
+	print (database)
+	usernameList = find_partner({"latitude":database[update.message.chat.id]['coordinates'][0], "longitude":database[update.message.chat.id]['coordinates'][1]}, update.message.chat.id)
+	update.message.reply_text('Found the following user(s) near you with similar interest.\n')
+
+	for data in usernameList:
+		update.message.reply_text('http://t.me/' + data['username'] + '/')
+	
+	return ConversationHandler.END
+	
 
 def cancel(bot, update):
 	user = update.message.from_user
@@ -137,10 +149,12 @@ def main():
 		entry_points=[CommandHandler('start', start)],
 
 		states={
+
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
 
-			WHATUWANT: [MessageHandler(Filters.text, whatuwant)]
+			BIO: [MessageHandler(Filters.text, bio)]
+
 		},
 
 		fallbacks=[CommandHandler('cancel', cancel)]
@@ -161,4 +175,10 @@ def main():
 
 
 if __name__ == '__main__':
+	try:
+		database = pickle.load(open("database.pickle", 'rb'))
+		print (database)
+	except:
+		database = {}
 	main()
+
