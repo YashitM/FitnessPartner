@@ -122,8 +122,8 @@ def skip_location(bot, update):
 	user = update.message.from_user
 	logger.info("User %s did not send a location.", user.first_name)
 	update.message.reply_text('You seem a bit paranoid! '
-							  'At last, tell me something about yourself.')
-	return BIO
+							  'I really need your location!')
+	return LOCATION
 
 
 def bio(bot, update):
@@ -166,7 +166,11 @@ def help(bot, update):
 		2. /setreminder - set a reminder for a particular activity
 		3. /showreminders - show all existing reminders
 		4. /removereminders - delete reminders
-		5. /viewpeople - view what people are upto near you''', reply_markup=ReplyKeyboardRemove())
+		5. /viewpeople - view what people are upto near you
+
+		
+		Miscellaneous Functions: 
+		1. /bmicalculator - to calculate your BMI''', reply_markup=ReplyKeyboardRemove())
 
 	return ConversationHandler.END
 	
@@ -182,6 +186,7 @@ def view_people(bot, update):
 		update.message.reply_text(printable_string)
 	except:
 		print ("list is empty")
+	return ConversationHandler.END
 
 def sendToPeople():
 	global database
@@ -195,15 +200,23 @@ def sendToPeople():
 				factNumber = randint(0, len(factList)-1)
 				print ("Sending fact number", factNumber, "to user", database[j]["first_name"])
 				bot.send_message(chat_id=j, text=factList[factNumber])
-		time.sleep(20)
+		time.sleep(200)
 	# threading.Timer(200, sendToPeople).start()
 
+def bmi_calculator(bot, update):
+	update.message.reply_text("Enter your height (in m)")
+	height = float(update.message.text)
+	update.message.reply_text("Enter your weight (in kg)")
+	weight = float(update.message.text)
+	update.message.reply_text("Your BMI is: " + str(weight/(height)**2))
+	
+	return ConversationHandler.END
 
 def main():
 	updater = Updater(TOKEN)
 	dp = updater.dispatcher
 	conv_handler = ConversationHandler(
-		entry_points=[CommandHandler('start', start), CommandHandler('help',help), CommandHandler('viewpeople',view_people)],
+		entry_points=[CommandHandler('start', start), CommandHandler('help',help), CommandHandler('viewpeople',view_people), CommandHandler('bmicalculator',bmi_calculator)],
 		states={
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
@@ -223,8 +236,6 @@ if __name__ == '__main__':
 		print (database)
 	except:
 		database = {}
-	# startFactFunc()
-	threading.Thread(target=sendToPeople).start()
-	# sendToPeople(database)
+	# threading.Thread(target=sendToPeople).start()
 	main()
 
