@@ -1,4 +1,4 @@
-TOKEN = "472298128:AAHjJOgBElcCZfyv-VIpSP0khOXsZuvRHsU"
+TOKEN = "454168022:AAENNH29QY7oBnMQAN6Pd1mJjUNeoGKizT8"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 DISTANCE_THRESHOLD = 5
 
@@ -158,6 +158,29 @@ def error(bot, update, error):
 	logger.warning('Update "%s" caused error "%s"', update, error)
 
 
+def help(bot, update):
+	update.message.reply_text('''Hey! Welcome to Fitness Partner. I will help you find a partner for your daily fitness activities to motivate you and keep you going!\n
+		You can control me by sending these commands:\n
+		1. /start - find a partner for your activity
+		2. /setreminder - set a reminder for a particular activity
+		3. /showreminders - show all existing reminders
+		4. /removereminders - delete reminders
+		5. /viewpeople - view what people are upto near you''', reply_markup=ReplyKeyboardRemove())
+
+	return ConversationHandler.END
+	
+
+def view_people(bot, update):
+	try:
+		user_chat_id = update.message.chat.id
+		printable_string = ""
+		current_user_dictionary = database
+		for i in current_user_dictionary:
+			if i!=user_chat_id:
+				printable_string += "@" + current_user_dictionary[i]["username"] + " is planning to " + current_user_dictionary[i]["activity"] + "!\n" 
+		update.message.reply_text(printable_string)
+	except:
+		print ("list is empty")
 
 def sendToPeople():
 	global database
@@ -169,14 +192,14 @@ def sendToPeople():
 			factNumber = randint(0, len(factList)-1)
 			print ("Sending fact number", factNumber, "to user", database[j]["first_name"])
 			bot.send_message(chat_id=j, text=factList[factNumber])
-	threading.Timer(20, sendToPeople).start()
+	threading.Timer(200, sendToPeople).start()
 
 
 def main():
 	updater = Updater(TOKEN)
 	dp = updater.dispatcher
 	conv_handler = ConversationHandler(
-		entry_points=[CommandHandler('start', start)],
+		entry_points=[CommandHandler('start', start), CommandHandler('help',help), CommandHandler('viewpeople',view_people)],
 		states={
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
