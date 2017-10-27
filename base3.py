@@ -19,7 +19,6 @@ def set_timer(bot, update, args, job_queue, chat_data):
 	chat_id = update.message.chat_id
 	try:
 		total = 0
-		
 		one = args[0]
 		two = one[0:2]
 		three = one[2:4]
