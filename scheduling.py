@@ -20,9 +20,7 @@ def start(bot, update):
 
 def alarm(bot, job):
 	currenttime = time.ctime()[11:13] + time.ctime()[14:16]
-	for _ in range(len(chat_data[job.context])):
-		if chat_data[job.context][_]['Time'] == currenttime:
-			bot.send_message(job.context, text = chat_data[job.context][_]['Reason'])
+	bot.send_message(job.context, text = "You have a reminder scheduled for " + currenttime)
 
 
 def set_timer(bot, update, args, job_queue, chat_data):
