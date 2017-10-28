@@ -23,7 +23,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-LOCATION, BIO, BMICALCULATORHELPER = range(3)
+LOCATION, WHATUSERWANTS, BMICALCULATORHELPER = range(3)
 
 database = {}
 
@@ -97,7 +97,7 @@ def start(bot, update):
 	print (update.message.chat.id)
 	print (update.message.chat.first_name)
 	database[update.message.chat.id] = {}
-	update.message.reply_text('I see! Please send me your location, '
+	update.message.reply_text('You can type /help to know more about my Functions. \n Please send me your location, '
 							  'so I know where you live, or send /skip if you don\'t want to.',
 							  reply_markup=ReplyKeyboardRemove())
 
@@ -115,7 +115,7 @@ def location(bot, update):
 	update.message.reply_text('Maybe I can visit you sometime! '
 							  'At last, What sort of fitness activity interests you?')
 
-	return BIO
+	return WHATUSERWANTS
 
 
 def skip_location(bot, update):
@@ -126,13 +126,13 @@ def skip_location(bot, update):
 	return LOCATION
 
 
-def bio(bot, update):
+def whatuserwants(bot, update):
 	message = update.message.text
 	database[update.message.chat.id]['activity'] = ps.stem(message)
 	with open('database.pickle', 'wb') as f:
 		pickle.dump(database, f)
 	user = update.message.from_user
-	logger.info("Bio of %s: %s", user.first_name, message)
+	logger.info("%s wants to: %s", user.first_name, message)
 	update.message.reply_text('Finding someone nearby...')
 	print (database)
 	usernameList = find_partner({"latitude":database[update.message.chat.id]['coordinates'][0], "longitude":database[update.message.chat.id]['coordinates'][1]}, update.message.chat.id, database[update.message.chat.id]['activity'])
@@ -226,7 +226,7 @@ def main():
 		states={
 			LOCATION: [MessageHandler(Filters.location, location),
 					   CommandHandler('skip', skip_location)],
-			BIO: [MessageHandler(Filters.text, bio)],
+			WHATUSERWANTS: [MessageHandler(Filters.text, whatuserwants)],
 
 			BMICALCULATORHELPER: [MessageHandler(Filters.text, bmicalculatorhelper)]
 		},
