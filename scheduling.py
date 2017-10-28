@@ -11,16 +11,18 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 chat_data = {}
 
-SELECTREMOVE = range(1)
+SELECTREMOVE, ALARM = range(2)
 
 def start(bot, update):
 	update.message.reply_text('Hi! Use /set <24 hr time><space><reason> to set a reminder')
 	return ConversationHandler.END
 
 
-def alarm(bot, job):
-	currenttime = time.ctime()[11:13] + time.ctime()[14:16]
-	bot.send_message(job.context, text = "You have a reminder scheduled for " + currenttime)
+def alarmgym(bot, job):
+	bot.send_message(job.context, text = "It's time for your exercise!")
+
+def alarmmedicine(bot, job):
+	bot.send_message(job.context, text = "It's time to take your medicine")
 
 
 def set_timer(bot, update, args, job_queue, chat_data):
@@ -50,7 +52,10 @@ def set_timer(bot, update, args, job_queue, chat_data):
 		if total < 0:
 			update.message.reply_text('Sorry we can not go back to future!')
 			return
-		job = job_queue.run_repeating(alarm, context = chat_id, interval = 86400, first = total)
+		if "exercise" in reason:
+			job = job_queue.run_repeating(alarmgym, context = chat_id, interval = 86400, first = total)
+		else:
+			job = job_queue.run_repeating(alarmmedicine, context = chat_id, interval = 86400, first = total)
 		if chat_id not in chat_data:
 			chat_data[chat_id] = []
 		chat_data[chat_id].append({'Job': job, 'Time':args[0], 'Reason':reason})
