@@ -9,7 +9,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 					level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-reminders = {}
 chat_data = {}
 
 SELECTREMOVE = range(1)
@@ -20,7 +19,10 @@ def start(bot, update):
 
 
 def alarm(bot, job):
-	bot.send_message(job.context, text = reminders[job.context]['reason'])
+	currenttime = time.ctime()[11:13] + time.ctime()[14:16]
+	for _ in range(len(chat_data[job.context])):
+		if chat_data[job.context][_]['Time'] == currenttime:
+			bot.send_message(job.context, text = chat_data[job.context][_]['Reason'])
 
 
 def set_timer(bot, update, args, job_queue, chat_data):
@@ -50,14 +52,11 @@ def set_timer(bot, update, args, job_queue, chat_data):
 		if total < 0:
 			update.message.reply_text('Sorry we can not go back to future!')
 			return
-		
-		reminders[chat_id] = {'time': args[0], 'reason': reason}
 		job = job_queue.run_repeating(alarm, context = chat_id, interval = 86400, first = total)
-		print (hahaha)
-		if len(chat_data[chat_id]) == 0:
+		if chat_id not in chat_data:
 			chat_data[chat_id] = []
 		chat_data[chat_id].append({'Job': job, 'Time':args[0], 'Reason':reason})
-
+		
 		update.message.reply_text('Reminder successfully set!')
 
 	except (IndexError, ValueError):
@@ -65,25 +64,27 @@ def set_timer(bot, update, args, job_queue, chat_data):
 	return ConversationHandler.END
 
 def unset(bot, update, args, chat_data):
+	tosend = ""
 	if len(chat_data[update.message.chat.id]) == 0:
-		update.message.reply_text('You have no active timer')
+		update.message.reply_text('You have no remainders set')
 		return
 	else:
 		update.message.reply_text("please enter the time of the reminder you wish to delete from among the following")
 		for _ in range(len(chat_data[update.message.chat.id])):
-			update.message.reply_text(str(chat_data[update.message.chat.id][_]['Time']) + " : " + str(chat_data[update.message.chat.id][_]['Reason']))
-
+			tosend += (str(chat_data[update.message.chat.id][_]['Time']) + " : " + str(chat_data[update.message.chat.id][_]['Reason'])) + "\n"
+		update.message.reply_text(tosend)
 	return SELECTREMOVE
 	
 
-def removeset(bot, update):
+def removeset(bot, update, chat_data):
 	for _ in range(len(chat_data[update.message.chat.id])):
 		if chat_data[update.message.chat.id][_]['Time'] == update.message.text:
 			job = chat_data[update.message.chat.id][_]['Job']
-			chat_data[update.message.chat.id].remove(_)
+			chat_data[update.message.chat.id].remove(chat_data[update.message.chat.id][_])
 			job.schedule_removal()
 			break
-	update.message.reply_text('Timer successfully unset!')
+	update.message.reply_text('Reminder Removed!')
+
 	return ConversationHandler.END
 
 def error(bot, update, error):
@@ -99,7 +100,7 @@ def main():
 								  pass_job_queue = True,
 								  pass_chat_data = True), CommandHandler("unset", unset, pass_chat_data=True, pass_args=True)],
 		states={
-			SELECTREMOVE: [MessageHandler(Filters.text, removeset)],
+			SELECTREMOVE: [MessageHandler(Filters.text, removeset, pass_chat_data = True)],
 		},
 		fallbacks=[]
 	)
@@ -110,4 +111,5 @@ def main():
 
 
 if __name__ == '__main__':
+
 	main()
